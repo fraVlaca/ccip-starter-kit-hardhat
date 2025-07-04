@@ -1,3 +1,4 @@
+import { ethers } from "hardhat";
 import {
   CCIP_BnM_ADDRESSES,
   CCIP_LnM_ADDRESSES,
@@ -5,6 +6,19 @@ import {
   PayFeesIn,
   routerConfig,
 } from "./constants";
+
+// Network key mapping between YAML config and constants
+const NETWORK_KEY_MAPPING: { [yamlKey: string]: string } = {
+  'sepolia': 'ethereumSepolia',
+  'polygonAmoy': 'polygonAmoy',
+  'arbitrumSepolia': 'arbitrumSepolia',
+  'avalancheFuji': 'avalancheFuji',
+  'baseSepolia': 'baseSepolia',
+  'optimismSepolia': 'optimismSepolia',
+  'bscTestnet': 'bnbChainTestnet',
+  'hederaTestnet': 'hederaTestnet', // Add this if you have hedera config
+  'customTestnet': 'customTestnet', // Add this if you have custom config
+};
 
 export const getProviderRpcUrl = (network: string) => {
   let rpcUrl;
@@ -121,7 +135,10 @@ export const getPrivateKey = () => {
 };
 
 export const getRouterConfig = (network: string) => {
-  switch (network) {
+  // Map YAML network key to constants key
+  const mappedNetwork = NETWORK_KEY_MAPPING[network] || network;
+  
+  switch (mappedNetwork) {
     case "ethereumSepolia":
       return routerConfig.ethereumSepolia;
     case "polygonAmoy":
@@ -181,7 +198,7 @@ export const getRouterConfig = (network: string) => {
     case "inkSepolia":
       return routerConfig.inkSepolia;
     default:
-      throw new Error("Unknown network: " + network);
+      throw new Error(`Unknown network: ${network} (mapped to: ${mappedNetwork}). Available networks: ${Object.keys(NETWORK_KEY_MAPPING).join(', ')}`);
   }
 };
 
@@ -210,12 +227,14 @@ export const getPayFeesIn = (payFeesIn: string) => {
 };
 
 export const getFaucetTokensAddresses = (network: string) => {
+  const mappedNetwork = NETWORK_KEY_MAPPING[network] || network;
   return {
-    ccipBnM: CCIP_BnM_ADDRESSES[network],
-    ccipLnM: CCIP_LnM_ADDRESSES[network],
+    ccipBnM: CCIP_BnM_ADDRESSES[mappedNetwork],
+    ccipLnM: CCIP_LnM_ADDRESSES[mappedNetwork],
   };
 };
 
 export const getLINKTokenAddress = (network: string) => {
-  return LINK_ADDRESSES[network];
+  const mappedNetwork = NETWORK_KEY_MAPPING[network] || network;
+  return LINK_ADDRESSES[mappedNetwork];
 };
