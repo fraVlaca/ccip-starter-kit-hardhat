@@ -3,6 +3,7 @@ dotenvenc.config();
 
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-verify";
 import "./tasks";
 import "./tasks/ccip-1_5-tasks";
 import * as yaml from 'js-yaml';
@@ -21,14 +22,18 @@ function loadNetworkConfig() {
   }
 }
 
-// Generate networks from YAML config
-function generateNetworks() {
+// Generate networks and etherscan config from YAML config
+function generateNetworksAndEtherscan() {
   const yamlConfig = loadNetworkConfig();
   const networks: any = {
     hardhat: {
       chainId: 31337,
     }
   };
+
+  // Etherscan configuration
+  const etherscanApiKey: any = {};
+  const etherscanCustomChains: any = [];
 
   // Use HARDHAT_PRIVATE_KEY for all networks
   const privateKey = process.env.HARDHAT_PRIVATE_KEY || process.env.PRIVATE_KEY;
@@ -38,18 +43,47 @@ function generateNetworks() {
   }
 
   // Add networks from YAML config
-  for (const network of yamlConfig.networks || []) {
+  for (const key of ["existingNetworks", "forkedNetworks"]) {
+    for (const network of yamlConfig[key] || []) {
     if (network.rpcUrls && network.rpcUrls.length > 0) {
+      // Add network configuration
       networks[network.key] = {
         url: network.rpcUrls[0],
         chainId: network.id,
         accounts: privateKey ? [privateKey] : []
       };
+
+      // Add etherscan configuration if block explorer exists AND API key is provided
+      if (network.blockExplorer?.apiURL) {
+        
+        if (network.blockExplorer.name === "etherscan") {
+          etherscanApiKey[network.key] = "4N14RCTT66Q5VMR93DEVH625VFDSQ9NM5U";
+        }
+        
+        // Add custom chain configuration
+        etherscanCustomChains.push({
+          network: network.key,
+          chainid: network.id,
+          urls: {
+            apiURL: network.blockExplorer.apiURL || network.blockExplorer.url, // Use the URL directly
+            browserURL: network.blockExplorer.url
+          }
+        });
+      }
+      }
     }
   }
 
-  return networks;
+  return { 
+    networks, 
+    etherscan: { 
+      apiKey: etherscanApiKey, 
+      customChains: etherscanCustomChains 
+    } 
+  };
 }
+
+const networkConfig = generateNetworksAndEtherscan();
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -58,13 +92,14 @@ const config: HardhatUserConfig = {
       evmVersion: "paris",
     }
   },
-  networks: generateNetworks(),
+  networks: networkConfig.networks,
   paths: {
     sources: "./contracts",
     tests: "./test",
     cache: "./cache",
     artifacts: "./artifacts",
   },
+  etherscan: networkConfig.etherscan,
 };
 
 export default config;

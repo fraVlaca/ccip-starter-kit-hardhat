@@ -1,4 +1,3 @@
-
 export type AddressMap = { [blockchain: string]: string };
 export type TokenAmounts = { token: string, amount: string }
 
@@ -37,6 +36,7 @@ export const supportedNetworks = [
     `cornTestnet`,
     `hashkeySepolia`,
     `inkSepolia`,
+    `hederaTestnet`,
 ];
 
 export const LINK_ADDRESSES: AddressMap = {
@@ -69,6 +69,7 @@ export const LINK_ADDRESSES: AddressMap = {
     [`cornTestnet`]: `0x996EfAb6011896Be832969D91E9bc1b3983cfdA1`,
     [`hashkeySepolia`]: `0x8418c4d7e8e17ab90232DC72150730E6c4b84F57`,
     [`inkSepolia`]: `0x3423C922911956b1Ccbc2b5d4f38216a6f4299b4`,
+    [`hederaTestnet`]: `0x90a386d59b9A6a4795a011e8f032Fc21ED6FEFb6`, // PLACEHOLDER - needs correct LINK address
 };
 
 export const CCIP_BnM_ADDRESSES: AddressMap = {
@@ -265,5 +266,10 @@ export const routerConfig = {
         address: `0x17fCda531D8E43B4e2a2A2492FBcd4507a1685A1`,
         chainSelector: `9763904284804119144`,
         feeTokens: [LINK_ADDRESSES[`inkSepolia`], `0x4200000000000000000000000000000000000006`]
+    },
+    hederaTestnet: {
+        address: `0x802C5F84eAD128Ff36fD6a3f8a418e339f467Ce4`, // PLACEHOLDER - needs correct router address
+        chainSelector: `222782988166878823`,
+        feeTokens: [LINK_ADDRESSES[`hederaTestnet`]] // PLACEHOLDER - needs correct HBAR address
     },
 }

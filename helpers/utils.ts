@@ -197,6 +197,8 @@ export const getRouterConfig = (network: string) => {
       return routerConfig.hashkeySepolia;
     case "inkSepolia":
       return routerConfig.inkSepolia;
+    case "hederaTestnet":
+      return routerConfig.hederaTestnet;
     default:
       throw new Error(`Unknown network: ${network} (mapped to: ${mappedNetwork}). Available networks: ${Object.keys(NETWORK_KEY_MAPPING).join(', ')}`);
   }

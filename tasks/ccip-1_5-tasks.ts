@@ -13,6 +13,25 @@ import {
 } from "../helpers/utils";
 import { Spinner } from "../helpers/spinner";
 
+// Helper function to verify contracts in the background
+async function verifyContract(
+  hre: HardhatRuntimeEnvironment,
+  address: string,
+  constructorArgs: any[],
+  contractName?: string
+) {
+  console.log(`  -> Starting background verification for contract at ${address}...`);
+  
+  await new Promise(resolve => setTimeout(resolve, 10000)); // Wait 8 seconds for indexing
+  
+  await hre.run("verify:verify", {
+    address: address,
+    constructorArguments: constructorArgs,
+    contract: contractName,
+  });
+
+}
+
 // Task to deploy BurnMintERC677 token
 task("deploy-token", "Deploys a BurnMintERC677 token and optionally mints initial tokens")
   .addParam("name", "Name of the token")
@@ -109,14 +128,31 @@ task("setup-burn-mint-pool", "Deploys and sets up a BurnMintTokenPool")
     const poolAddress = await pool.getAddress();
     console.log(`  -> BurnMintTokenPool deployed at: ${poolAddress}`);
 
-    // Grant roles
+
+    // Grant roles - with idempotency checks
     const tokenContract = BurnMintERC677__factory.connect(token, deployer);
-    console.log(`  -> Granting MINT_ROLE to pool...`);
-    const mintTx = await tokenContract.grantMintRole(poolAddress);
-    await mintTx.wait();
-    console.log(`  -> Granting BURN_ROLE to pool...`);
-    const burnTx = await tokenContract.grantBurnRole(poolAddress);
-    await burnTx.wait();
+
+    // Check if mint role already granted
+    const hasMintRole = await tokenContract.isMinter(poolAddress);
+
+    if (!hasMintRole) {
+      console.log(`  -> Granting MINT_ROLE to pool...`);
+      const mintTx = await tokenContract.grantMintRole(poolAddress);
+      await mintTx.wait();
+    } else {
+      console.log(`  -> MINT_ROLE already granted to pool`);
+    }
+
+    // Check if burn role already granted
+    const hasBurnRole = await tokenContract.isBurner(poolAddress);
+
+    if (!hasBurnRole) {
+      console.log(`  -> Granting BURN_ROLE to pool...`);
+      const burnTx = await tokenContract.grantBurnRole(poolAddress);
+      await burnTx.wait();
+    } else {
+      console.log(`  -> BURN_ROLE already granted to pool`);
+    }
 
     spinner.stop();
     console.log(`✅ BurnMintTokenPool setup complete for token ${token} at address: ${poolAddress} on ${network}`);
@@ -219,10 +255,23 @@ task("configure-pool", "Configures a pool to know about its remote counterpart")
 
     console.log(`  -> Applying chain update...`);
     const tx = await poolContract.applyChainUpdates([], chainUpdate);
-    await tx.wait();
+    console.log(`  -> Transaction submitted with hash: ${tx.hash}`);
+    
+    console.log(`  -> Waiting for transaction confirmation...`);
+    const receipt = await tx.wait();
+    
+    if (receipt?.status !== 1) {
+      spinner.stop();
+      throw new Error(`Transaction failed with status: ${receipt?.status}`);
+    }
 
     spinner.stop();
     console.log(`✅ ${poolType} ${localPool} on ${localNetwork} configured successfully.`);
+    console.log(`Transaction hash: ${receipt.hash}`);
+    console.log(`Block number: ${receipt.blockNumber}`);
+    console.log(`Gas used: ${receipt.gasUsed.toString()}`);
+    
+    return receipt.hash;
   });
 
 // Task to send tokens via CCIP

@@ -11,7 +11,7 @@
     "@chainlink/contracts-ccip": "^1.6.0-beta.3",
     "@chainlink/env-enc": "^1.0.5",
     "@chainlink/local": "^0.2.5-beta",
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "hardhat": "^2.22.7"
+    "@nomicfoundation/hardhat-toolbox": "^6.0.0",
+    "hardhat": "^2.25.0"
   }
 }
