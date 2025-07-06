@@ -59,6 +59,10 @@ function generateNetworksAndEtherscan() {
         if (network.blockExplorer.name === "etherscan") {
           etherscanApiKey[network.key] = "4N14RCTT66Q5VMR93DEVH625VFDSQ9NM5U";
         }
+
+        if (network.blockExplorer.name === "blockscout") {
+          etherscanApiKey[network.key] = "";
+        }
         
         // Add custom chain configuration
         etherscanCustomChains.push({
